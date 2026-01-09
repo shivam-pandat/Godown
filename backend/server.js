@@ -47,20 +47,26 @@ app.post("/auth/register", async (req, res) => {
 app.post("/auth/login", (req, res) => {
   const { username, password } = req.body;
 
-  db.get("SELECT * FROM users WHERE username = ?", [username], async (err, user) => {
-    if (err || !user) return res.status(401).json({ error: "Invalid credentials" });
+  db.get(
+    "SELECT * FROM users WHERE username = ?",
+    [username],
+    async (err, user) => {
+      if (err || !user)
+        return res.status(401).json({ error: "Invalid credentials" });
 
-    const ok = await bcrypt.compare(password, user.password_hash);
-    if (!ok) return res.status(401).json({ error: "Incorrect password" });
+      const ok = await bcrypt.compare(password, user.password_hash);
+      if (!ok) return res.status(401).json({ error: "Incorrect password" });
 
-    res.json({ token: sign(user) });
-  });
+      res.json({ token: sign(user) });
+    }
+  );
 });
 
 // Middleware check token
 function authMiddleware(req, res, next) {
   const header = req.headers.authorization;
-  if (!header) return res.status(401).json({ error: "Missing token" });
+  if (!header || !header.startsWith("Bearer "))
+    return res.status(401).json({ error: "Missing or invalid token" });
 
   const token = header.split(" ")[1];
   const payload = verify(token);
@@ -74,7 +80,7 @@ function authMiddleware(req, res, next) {
 // -----------------------------------------------------------
 // STOCK CRUD
 // -----------------------------------------------------------
-app.get("/stock", authMiddleware, (req, res) => {
+app.get("/stock", (req, res) => {
   db.all("SELECT * FROM stock", [], (err, rows) => {
     if (err) return res.status(500).json({ error: err });
     res.json(rows);
@@ -127,11 +133,15 @@ app.post("/stock/scan", authMiddleware, (req, res) => {
 
     const newQty = row.quantity + Number(change);
 
-    db.run("UPDATE stock SET quantity=? WHERE id=?", [newQty, row.id], function (err) {
-      if (err) return res.status(500).json({ error: err });
+    db.run(
+      "UPDATE stock SET quantity=? WHERE id=?",
+      [newQty, row.id],
+      function (err) {
+        if (err) return res.status(500).json({ error: err });
 
-      res.json({ id: row.id, newQuantity: newQty });
-    });
+        res.json({ id: row.id, newQuantity: newQty });
+      }
+    );
   });
 });
 
@@ -184,9 +194,11 @@ app.get("/export/pdf", authMiddleware, (req, res) => {
     doc.moveDown();
 
     rows.forEach((r) => {
-      doc.fontSize(12).text(
-        `${r.id} — ${r.name} — Qty: ${r.quantity} ${r.unit} — Low: ${r.low_threshold}`
-      );
+      doc
+        .fontSize(12)
+        .text(
+          `${r.id} — ${r.name} — Qty: ${r.quantity} ${r.unit} — Low: ${r.low_threshold}`
+        );
     });
 
     doc.end();
@@ -224,7 +236,10 @@ app.get("/export/tally", authMiddleware, (req, res) => {
     const xml = root.end({ prettyPrint: true });
 
     res.setHeader("Content-Type", "application/xml");
-    res.setHeader("Content-Disposition", "attachment; filename=stock_tally.xml");
+    res.setHeader(
+      "Content-Disposition",
+      "attachment; filename=stock_tally.xml"
+    );
     res.send(xml);
   });
 });

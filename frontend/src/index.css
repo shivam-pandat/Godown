@@ -5,9 +5,9 @@
 /* optional global styles */
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue',
-    Arial, 'Noto Sans', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica',
-    sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", "Ubuntu", "Cantarell", "Fira Sans",
+    "Droid Sans", "Helvetica", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
